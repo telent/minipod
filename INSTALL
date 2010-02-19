@@ -1,0 +1,21 @@
+0) making this work on anything signficantly unlike a FriendlyARM
+mini2440 is outside scope as far as I (the author) am concerned.
+
+1) You will need a compiler that outputs code for an ARM 920T.
+Personally I cross-compile from x86-64 using the emdebian toolchain,
+but there's probably nothing other than the value of your time
+stopping you from building natively.
+
+2) You will need libraries and header files for libmad, tslib and libao.
+If you are cross-compiling you will need them installed where the
+cross-compiler can find them.
+
+   $ apt-cross -a armel -i  libmad0-dev libao-dev libts-dev
+
+3) Look at the Makefile.  Edit where necessary
+
+4) make
+
+
+
+
