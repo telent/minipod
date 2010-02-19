@@ -1,0 +1,17 @@
+TO DO
+
+Numbers denote importance on a 1..4 scale
+
+[1] "buttons" inputs for rider's remote control
+[1] on-screen UI for seek/pause/volume etc
+[2] browse into subdirectories
+[1] scroll up/down when too many tracks for screen
+[2] nicer fonts
+[1] mount USB sticks when we get dbus messages
+[3] m3u playlists would be nice
+[1] WMA playback
+[1] WAV playback
+[2] FLAC playback
+[3] Oh, go on them: OGG
+[2] EQ/mixer controls
+[4] Bluetooth
