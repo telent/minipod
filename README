@@ -1,0 +1,14 @@
+
+A special-purpose audio player for the FriendlyARM Mini2440 system.
+Based on mashing code together from ts_test (tslib example program)
+and the madplay example program.  Therefore
+
+Some parts Copyright (C) 2001 Russell King.
+Other parts Copyright (C) 2000-2004 Underbit Technologies, Inc.
+The rest Copyright (C) 2010 Daniel Barlow
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.  Please see the file COPYING in this directory for
+the complete text of the GNU General Public License
