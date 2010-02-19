@@ -3,7 +3,8 @@ TO DO
 Numbers denote importance on a 1..4 scale
 
 [1] "buttons" inputs for rider's remote control
-[1] on-screen UI for seek/pause/volume etc
+[1] on-screen UI for seek/pause/volume/reset etc
+[1] ("reset" is implemented by calling exec() on ourselves)
 [2] browse into subdirectories
 [1] scroll up/down when too many tracks for screen
 [2] nicer fonts

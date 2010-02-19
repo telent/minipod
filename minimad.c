@@ -1,4 +1,7 @@
 /*
+ * minimad.c (C) 2010 Daniel Barlow
+ *
+ * based in part on minimad.c, the example program for 
  * libmad - MPEG audio decoder library
  * Copyright (C) 2000-2004 Underbit Technologies, Inc.
  *
@@ -16,23 +19,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * $Id: minimad.c,v 1.4 2004/01/23 09:41:32 rob Exp $
  */
 
-# include <stdio.h>
-# include <unistd.h>
-# include <sys/stat.h>
-# include <sys/mman.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
-# include "mad.h"
+#include "mad.h"
 
 #include <ao/ao.h>
 
-/* minimad.c says:
+/* A generic pointer to this structure is passed to each of the
+ * callback functions. Put here any data you need to access from
+ * within the callbacks.
+ */
+
+struct buffer {
+  unsigned char const *start;
+  unsigned long length;
+};
+
+/* Original minimad.c said:
  * This is perhaps the simplest example use of the MAD high-level API.
  * Standard input is mapped into memory via mmap(), then the high-level API
  * is invoked with three callbacks: input, output, and error. The output
@@ -46,10 +58,15 @@
  */
 
 
-static int decode(unsigned char const *, unsigned long);
+static enum mad_flow input_fn(void *data, struct mad_stream *stream);
+static enum mad_flow output_fn(void *data,struct mad_header const *header,
+			    struct mad_pcm *pcm);
+static enum mad_flow error_fn(void *data, struct mad_stream *stream,
+			   struct mad_frame *frame);
 
 static ao_device *out_device;
 
+/* calls to _init and _close whould be paired.  */
 int minimad_init(void)
 {
     ao_sample_format format;
@@ -69,35 +86,57 @@ int minimad_init(void)
 	fprintf(stderr, "Error opening device.\n");
 	return 1;
     }   
-
     return 0;
 }
 
-/* don't call this if we're already playing.  In theory it would be
-* impossible
-*/
+/* Call this between calls to _init and _close, as many times as you like.
+ * Don't call it recursively
+ */
+
 int mad_start_playback(char * pathname)
 {
+    /* Open and mmap the specified file.  Instantiate a decoder object
+     * and configures it with the input, output, and error callback
+     * functions.  A single call to mad_decoder_run() continues until
+     * a callback function returns MAD_FLOW_STOP (to stop decoding) or
+     * MAD_FLOW_BREAK (to stop decoding and signal an error).
+     */
+
     struct stat mstat;
-    char * fdm;
+    char *mp3_data;
+    int ret;
     int fd=open(pathname,O_RDONLY);
 
     fprintf(stderr,"starting playback: \"%s\" (%d)\n",pathname,fd);
     if (stat(pathname, &mstat) == -1 || mstat.st_size == 0)
 	return 2;
     
-    fdm = (char *) mmap(0, mstat.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    if (fdm == MAP_FAILED) {
+    mp3_data = (char *) mmap(0, mstat.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    if (mp3_data == MAP_FAILED) {
 	close(fd);
 	return 3;
     }
     
-    decode(fdm, mstat.st_size);
-    close(fd);
-
-    if (munmap(fdm, mstat.st_size) == -1)
-	return 4;
+    struct buffer buffer;
+    struct mad_decoder decoder;
     
+    /* initialize our private message structure */
+    
+    buffer.start = mp3_data;
+    buffer.length = mstat.st_size;
+    
+    /* configure input, output, and error functions */
+    mad_decoder_init(&decoder, &buffer,
+		     input_fn, 0 /* header */, 0 /* filter */, output_fn,
+		     error_fn, 0 /* message */);
+    
+    /* start decoding */
+    ret = mad_decoder_run(&decoder, MAD_DECODER_MODE_SYNC);
+    
+    /* cleanup */
+    mad_decoder_finish(&decoder);
+    munmap(mp3_data, mstat.st_size);
+    close(fd);
     return 0;
 }
 
@@ -108,16 +147,6 @@ int minimad_close()
 }
 
 
-/*
- * This is a private message structure. A generic pointer to this structure
- * is passed to each of the callback functions. Put here any data you need
- * to access from within the callbacks.
- */
-
-struct buffer {
-  unsigned char const *start;
-  unsigned long length;
-};
 
 /*
  * This is the input callback. The purpose of this callback is to (re)fill
@@ -128,8 +157,8 @@ struct buffer {
  */
 
 static
-enum mad_flow input(void *data,
-		    struct mad_stream *stream)
+enum mad_flow input_fn(void *data,
+		       struct mad_stream *stream)
 {
   struct buffer *buffer = data;
 
@@ -177,9 +206,9 @@ static char pcm_buffer[1024*16]; /* no idea how big this should be */
 static char *ob_watermark;
 
 static
-enum mad_flow output(void *data,
-		     struct mad_header const *header,
-		     struct mad_pcm *pcm)
+enum mad_flow output_fn(void *data,
+			struct mad_header const *header,
+			struct mad_pcm *pcm)
 {
   unsigned int nchannels, nsamples;
   mad_fixed_t const *left_ch, *right_ch;
@@ -223,9 +252,9 @@ enum mad_flow output(void *data,
  */
 
 static
-enum mad_flow error(void *data,
-		    struct mad_stream *stream,
-		    struct mad_frame *frame)
+enum mad_flow error_fn(void *data,
+		       struct mad_stream *stream,
+		       struct mad_frame *frame)
 {
   struct buffer *buffer = data;
 
@@ -238,39 +267,3 @@ enum mad_flow error(void *data,
   return MAD_FLOW_CONTINUE;
 }
 
-/*
- * This is the function called by main() above to perform all the decoding.
- * It instantiates a decoder object and configures it with the input,
- * output, and error callback functions above. A single call to
- * mad_decoder_run() continues until a callback function returns
- * MAD_FLOW_STOP (to stop decoding) or MAD_FLOW_BREAK (to stop decoding and
- * signal an error).
- */
-
-static
-int decode(unsigned char const *start, unsigned long length)
-{
-  struct buffer buffer;
-  struct mad_decoder decoder;
-  int result;
-
-  /* initialize our private message structure */
-
-  buffer.start  = start;
-  buffer.length = length;
-
-  /* configure input, output, and error functions */
-
-  mad_decoder_init(&decoder, &buffer,
-		   input, 0 /* header */, 0 /* filter */, output,
-		   error, 0 /* message */);
-
-  /* start decoding */
-
-  result = mad_decoder_run(&decoder, MAD_DECODER_MODE_SYNC);
-
-  /* release the decoder */
-
-  mad_decoder_finish(&decoder);
-  return result;
-}
