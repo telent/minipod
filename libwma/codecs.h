@@ -33,6 +33,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "config.h"
 #include "system.h"
 #include "metadata.h"
@@ -89,8 +90,30 @@ enum codec_status {
     CODEC_ERROR = -1,
 };
 
+#define ID3V2_BUF_SIZE 8192 /* fuck knows, I don't */
+
+
 struct mp3entry {
     unsigned long first_frame_offset;
+    unsigned long length;   /* song length in ms */
+    unsigned int bitrate;
+    unsigned long frequency;
+    char* title;
+    char* artist;
+    char* album;
+    char* comment;
+    char* track_string;
+    int tracknum;
+    char* genre_string;
+    char* albumartist;
+    char* composer;
+    char* year_string;
+    int year;
+
+    /* these following two fields are used for local buffering */
+    char id3v2buf[ID3V2_BUF_SIZE];
+    char id3v1buf[4][92];
+
     unsigned long filesize; /* without headers; in bytes */
     unsigned long offset;  /* bytes played */
     unsigned char toc[100]; /* table of contents */

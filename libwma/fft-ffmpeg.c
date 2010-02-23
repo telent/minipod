@@ -27,7 +27,6 @@
  * FFT/IFFT transforms.
  */
 
-#define CPU_ARM
 #define ICODE_ATTR
 #ifdef CPU_ARM
 // we definitely want CONFIG_SMALL undefined for ipod

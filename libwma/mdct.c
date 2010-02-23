@@ -17,10 +17,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 typedef int int32_t;
 typedef unsigned short uint16_t;
 #include "types.h"
-#define CPU_ARM
+
+#ifdef CPU_ARM
 #include "asm_arm.h"
 
 #if 0
@@ -430,3 +432,16 @@ long fsincos(unsigned long phase, fixed32 *cos)
 
     return y;
 }
+#else 
+#include <stdio.h>
+long fsincos(unsigned long phase, fixed32 *cos)
+{
+    fprintf(stderr,"fsincos only implemented on ARM\n");
+    exit(0);
+}
+void ff_imdct_calc(unsigned int nbits, fixed32 *output, const fixed32 *input)
+{
+    fprintf(stderr,"ff_imdct_calc only implemented on ARM\n");
+    exit(0);
+}
+#endif CPU_ARM
