@@ -444,4 +444,4 @@ void ff_imdct_calc(unsigned int nbits, fixed32 *output, const fixed32 *input)
     fprintf(stderr,"ff_imdct_calc only implemented on ARM\n");
     exit(0);
 }
-#endif CPU_ARM
+#endif /* CPU_ARM */

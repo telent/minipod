@@ -49,26 +49,7 @@
 #include "dsp.h"
 #endif
 #include "settings.h"
-
-#ifdef CODEC
-#if defined(DEBUG) || defined(SIMULATOR)
-#undef DEBUGF
-#define DEBUGF  ci->debugf
-#undef LDEBUGF
-#define LDEBUGF ci->debugf
-#else
-#define DEBUGF(...)
-#define LDEBUGF(...)
-#endif
-
-#ifdef ROCKBOX_HAS_LOGF
-#undef LOGF
-#define LOGF ci->logf
-#else
-#define LOGF(...)
-#endif
-
-#endif
+#include "debug.h"
 
 /* magic for normal codecs */
 #define CODEC_MAGIC 0x52434F44 /* RCOD */

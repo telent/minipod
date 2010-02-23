@@ -32,8 +32,7 @@
 
 #include "mad.h"
 
-#include <ao/ao.h>
-extern ao_device *pcm_out_device;
+#include "pcm.h"
 
 
 /* A generic pointer to this structure is passed to each of the

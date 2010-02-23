@@ -28,18 +28,16 @@
 #include "libwma/codeclib.h"
 #include "libwma/asf.h"
 #include "libwma/wmadec.h"
-#include <ao/ao.h>
+#include "libwma/debug.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <string.h>
 
-
-#define LOGF printf
-#ifndef DEBUGF
-#define DEBUGF printf
-#endif
+#include "pcm.h"
 
 int packet_count=0;
 
@@ -475,7 +473,6 @@ int rb_wma_start_playback(char * pathname)
     uint32_t elapsedtime;
     int retval;
     asf_waveformatex_t wfx;
-    size_t resume_offset;
     int i;
     int wmares, res;
     uint8_t* audiobuf;

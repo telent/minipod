@@ -28,64 +28,8 @@
  */
 
 #include "bitstream.h"
-/* #include <codecs/lib/codeclib.h> */
-#define DEBUGF
-/* this stuff is unused */
-#if 0
-/**
- * Same as av_mallocz_static(), but does a realloc.
- *
- * @param[in] ptr The block of memory to reallocate.
- * @param[in] size The requested size.
- * @return Block of memory of requested size.
- * @deprecated. Code which uses ff_realloc_static is broken/missdesigned
- * and should correctly use static arrays
- */
-attribute_deprecated void *ff_realloc_static(void *ptr, unsigned int size);
-
-
-const uint8_t ff_sqrt_tab[128]={
-        0, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-        9, 9, 9, 9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,11,11,11,11,11,11,11
-};
-
-const uint8_t ff_log2_tab[256]={
-        0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-        5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
-};
-
-
-void align_put_bits(PutBitContext *s)
-{
-#ifdef ALT_BITSTREAM_WRITER
-    put_bits(s,(  - s->index) & 7,0);
-#else
-    put_bits(s,s->bit_left & 7,0);
-#endif
-}
-
-void ff_put_string(PutBitContext * pbc, char *s, int put_zero)
-{
-    while(*s){
-        put_bits(pbc, 8, *s);
-        s++;
-    }
-    if(put_zero)
-        put_bits(pbc, 8, 0);
-}
-#endif
 
 /* VLC decoding */
-
-//#define DEBUG_VLC
 
 #define GET_DATA(v, table, i, wrap, size) \
 {\
@@ -111,7 +55,7 @@ static int alloc_table(VLC *vlc, int size)
     vlc->table_size += size;
     if (vlc->table_size > vlc->table_allocated) {
         DEBUGF("Tried to allocate past the end of a Huffman table: %d/%d\n", 
-            vlc->table_allocated, vlc->table_allocated+(1 << vlc->bits));
+	       vlc->table_allocated, vlc->table_allocated+(1 << vlc->bits));
         vlc->table_allocated += (1 << vlc->bits);
         if (!vlc->table)
             return -1;

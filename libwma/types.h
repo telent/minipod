@@ -3,6 +3,3 @@
 #define fixed32         int32_t
 #define fixed64         int64_t
 #define IBSS_ATTR
-#ifndef DEBUGF
-#define DEBUGF
-#endif

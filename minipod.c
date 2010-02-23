@@ -22,10 +22,13 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <tslib.h>
+#include <unistd.h>		/* chdir */
+
 
 #include "fbutils.h"
 #include "songlist.h"
 #include "libwma/codecs.h"
+#include "pcm.h"
 
 static int palette [] =
 {
@@ -118,15 +121,49 @@ static void refresh_screen ()
 struct tsdev *ts;
 int mouse_x, mouse_y;
 
+int input_poll(int wait)
+{
+    struct ts_sample samp;
+    int ret;
+    fd_set fdset;
+    struct timeval timeout;
+    timeout.tv_sec=0; timeout.tv_usec=0;
+
+    FD_ZERO(&fdset);
+    FD_SET(ts_fd(ts), &fdset);
+    
+    if(pending_command.tag) return 0;
+    if(!wait) {
+	/* during playback, we don't want to hang waiting for input */
+	if(select(ts_fd(ts)+1, &fdset,0,0, &timeout)==0)
+	    return 1;
+    }
+
+    ret = ts_read(ts, &samp, 1);
+    if (ret < 0) {
+	perror("ts_read");
+	close_framebuffer();
+	pcm_shutdown();
+	exit(1);
+    }
+    
+    if (ret != 1) return 1;
+    
+    printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec,
+	   samp.x, samp.y, samp.pressure);
+    if(samp.pressure==0) {
+	pending_command.tag=SKIP;
+	pending_command.value=(samp.y-20)/30;
+    }
+    return 1;
+}
+
 int main()
 {
 	unsigned int i;
-	unsigned int mode = 0;
 
 	char *tsdevice=NULL;
 	char * directory="/mnt/"; /* trailing / is important! */
-	struct mp3entry id3;
-
 
 	chdir(directory);
 	songs=read_songs(directory);
@@ -201,49 +238,12 @@ int main()
 		mad_start_playback(songs[current_track].filename);
 		break;
 	    default:
-		fprintf(stderr," command %d unimplemented\n");
+		fprintf(stderr," command %d unimplemented\n",tag);
 		break;
 	    }
 	}
 
 	close_framebuffer();
-	minimad_close();
-}
-
-int input_poll(int wait)
-{
-    struct ts_sample samp;
-    int ret;
-    int i;
-    fd_set fdset;
-    struct timeval timeout;
-    timeout.tv_sec=0; timeout.tv_usec=0;
-
-    FD_ZERO(&fdset);
-    FD_SET(ts_fd(ts), &fdset);
-    
-    if(pending_command.tag) return 0;
-    if(!wait) {
-	/* during playback, we don't want to hang waiting for input */
-	if(select(ts_fd(ts)+1, &fdset,0,0, &timeout)==0)
-	    return 1;
-    }
-
-    ret = ts_read(ts, &samp, 1);
-    if (ret < 0) {
-	perror("ts_read");
-	close_framebuffer();
 	pcm_shutdown();
-	exit(1);
-    }
-    
-    if (ret != 1) return 1;
-    
-    printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec,
-	   samp.x, samp.y, samp.pressure);
-    if(samp.pressure==0) {
-	pending_command.tag=SKIP;
-	pending_command.value=(samp.y-20)/30;
-    }
-    return 1;
 }
+
