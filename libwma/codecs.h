@@ -98,7 +98,7 @@ struct mp3entry {
     unsigned long length;   /* song length in ms */
     unsigned int bitrate;
     unsigned long frequency;
-    char* title;
+    unsigned char* title;
     char* artist;
     char* album;
     char* comment;

@@ -1,8 +1,11 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #define IN_SONGLIST_C
 #include "songlist.h"
+
 
 struct song *read_songs(char *dirname) 
 {

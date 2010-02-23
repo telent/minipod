@@ -457,11 +457,24 @@ static int seek(int ms, asf_waveformatex_t* wfx)
         }
     }
 }
+#if 0
+int rb_wma_init(void)
+{
+    ao_sample_format format;
+    int ao_default_driver;
 
-
-
-/* this is the codec entry point */
-enum codec_status codec_main(void)
+    ao_initialize();
+    ao_default_driver = ao_default_driver_id();
+	
+    out_device = ao_open_live(ao_default_driver, &format, NULL);
+    if (out_device == NULL) {
+	fprintf(stderr, "Error opening device.\n");
+	return 1;
+    }   
+    return 0;
+}
+#endif
+int rb_wma_start_playback(char * pathname)
 {
     uint32_t elapsedtime;
     int retval;
@@ -473,6 +486,8 @@ enum codec_status codec_main(void)
     int audiobufsize;
     int packetlength = 0;
     int errcount = 0;
+
+    /* XXX stat the pathname and initialise id3->filesize */
 
     /* Generic codec initialisation */
     /* ci->configure(DSP_SET_SAMPLE_DEPTH, 29); */
@@ -489,12 +504,13 @@ next_track:
        playback engine will reset it. */
     resume_offset = ci->id3->offset;
 restart_track:
+    /*
     if (codec_init()) {
         LOGF("WMA: Error initialising codec\n");
         retval = CODEC_ERROR;
         goto exit;
     }
-
+    */
     /* Copy the format metadata we've stored in the id3 TOC field.  This
        saves us from parsing it again here. */
     memcpy(&wfx, ci->id3->toc, sizeof(wfx));

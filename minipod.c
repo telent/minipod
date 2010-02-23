@@ -23,6 +23,7 @@
 
 #include "fbutils.h"
 #include "songlist.h"
+#include "libwma/codecs.h"
 
 static int palette [] =
 {
@@ -122,6 +123,16 @@ int main()
 
 	char *tsdevice=NULL;
 	char * directory="/mnt/"; /* trailing / is important! */
+	struct mp3entry id3;
+
+	int fd=open("foo.wma",O_RDONLY);
+	if(fd>-1) {
+	    get_asf_metadata(fd,&id3);
+	} else {
+	    perror("foo.wma");
+	}
+	exit(0);
+
 	chdir(directory);
 	songs=read_songs(directory);
 
