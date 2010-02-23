@@ -4,6 +4,23 @@ Numbers denote importance on a 1..4 scale
 
 [1] "buttons" inputs for rider's remote control
 [1] on-screen UI for seek/pause/volume/reset etc
+
+We are going with a tabbed UI: tabs at top are
+
+Songs 
+- allow track selection
+- current track is highlighted
+- changing track switches to 'playing' tab
+Playing
+- track title&tags, seek buttons, pause
+- dancing spectrum analyser or some thit, maybe
+Volume
+- volume and eq settings
+ - volume, bass boost, treble boost sliders
+ - +6dB boost on/off
+ - sound processing filter is off/min/max 
+
+
 [1] ("reset" is implemented by calling exec() on ourselves)
 [2] browse into subdirectories
 [1] scroll up/down when too many tracks for screen
@@ -16,3 +33,4 @@ Numbers denote importance on a 1..4 scale
 [3] Oh, go on them: OGG
 [2] EQ/mixer controls
 [4] Bluetooth
+[1] disable screensaver
