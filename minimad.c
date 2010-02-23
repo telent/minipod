@@ -33,6 +33,8 @@
 #include "mad.h"
 
 #include <ao/ao.h>
+extern ao_device *pcm_out_device;
+
 
 /* A generic pointer to this structure is passed to each of the
  * callback functions. Put here any data you need to access from
@@ -64,33 +66,9 @@ static enum mad_flow output_fn(void *data,struct mad_header const *header,
 static enum mad_flow error_fn(void *data, struct mad_stream *stream,
 			   struct mad_frame *frame);
 
-static ao_device *out_device;
 
-/* calls to _init and _close whould be paired.  */
-int minimad_init(void)
-{
-    ao_sample_format format;
-    int ao_default_driver;
-
-    ao_initialize();
-    ao_default_driver = ao_default_driver_id();
-	
-    format.bits = 16;
-    format.channels = 2;
-    format.rate = 44100;
-    format.byte_format = AO_FMT_LITTLE;
-
-    /* -- Open driver -- */
-    out_device = ao_open_live(ao_default_driver, &format, NULL);
-    if (out_device == NULL) {
-	fprintf(stderr, "Error opening device.\n");
-	return 1;
-    }   
-    return 0;
-}
-
-/* Call this between calls to _init and _close, as many times as you like.
- * Don't call it recursively
+/* 
+ * Don't call this recursively
  */
 
 int mad_start_playback(char * pathname)
@@ -116,6 +94,7 @@ int mad_start_playback(char * pathname)
 	close(fd);
 	return 3;
     }
+    pcm_open_device(16,2,44100);
     
     struct buffer buffer;
     struct mad_decoder decoder;
@@ -140,11 +119,6 @@ int mad_start_playback(char * pathname)
     return 0;
 }
 
-int minimad_close()
-{
-    ao_close(out_device);
-    ao_shutdown();
-}
 
 
 
@@ -239,7 +213,7 @@ enum mad_flow output_fn(void *data,
     }
   }
   if(ob>ob_watermark ) ob_watermark=ob;
-  ao_play(out_device,pcm_buffer,ob-pcm_buffer);
+  ao_play(pcm_out_device,pcm_buffer,ob-pcm_buffer);
   
   return input_poll(0) ?  MAD_FLOW_CONTINUE : MAD_FLOW_STOP;
 }

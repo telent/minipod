@@ -1,5 +1,7 @@
 /*
- *  tslib/src/ts_test.c
+ * minipod.c 
+ *
+ *  Was tslib/src/ts_test.c
  *
  *  Copyright (C) 2001 Russell King.
  *
@@ -125,13 +127,6 @@ int main()
 	char * directory="/mnt/"; /* trailing / is important! */
 	struct mp3entry id3;
 
-	int fd=open("foo.wma",O_RDONLY);
-	if(fd>-1) {
-	    get_asf_metadata(fd,&id3);
-	} else {
-	    perror("foo.wma");
-	}
-	exit(0);
 
 	chdir(directory);
 	songs=read_songs(directory);
@@ -161,10 +156,12 @@ int main()
 		exit(1);
 	}
 
-	if(minimad_init()) {
+	if(pcm_init()) {
 	    close_framebuffer();
 	    exit(1);
 	}
+	
+	rb_wma_start_playback("/dan/minipod/foo.wma");
 
 	mouse_x = xres/2;
 	mouse_y = yres/2;
@@ -236,7 +233,7 @@ int input_poll(int wait)
     if (ret < 0) {
 	perror("ts_read");
 	close_framebuffer();
-	minimad_close();
+	pcm_shutdown();
 	exit(1);
     }
     

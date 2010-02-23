@@ -23,12 +23,23 @@
  *
  ****************************************************************************/
 
+
 #define IN_WMA_C
 #include "libwma/codeclib.h"
 #include "libwma/asf.h"
 #include "libwma/wmadec.h"
+#include <ao/ao.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
-#define LOGF
+
+#define LOGF printf
+#ifndef DEBUGF
+#define DEBUGF printf
+#endif
 
 int packet_count=0;
 
@@ -79,7 +90,10 @@ static unsigned short get_short_le(void* buf)
         (((bits) != 0x03) ? ((bits) != 0x02) ? ((bits) != 0x01) ? \
          0 : *(data) : get_short_le(data) : get_long_le(data))
 
-static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlength, asf_waveformatex_t* wfx)
+static char *wma_pointer;
+
+static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize,
+			   int* packetlength, asf_waveformatex_t* wfx)
 {
     uint8_t tmp8, packet_flags, packet_property;
     int stream_id;
@@ -100,20 +114,18 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
     uint32_t media_object_number;
     uint32_t media_object_offset;
     uint32_t bytesread = 0;
-    uint8_t* buf;
+    /*    uint8_t* buf; */
     size_t bufsize;
     int i;
-    /*DEBUGF("Reading new packet at %d bytes ", (int)ci->curpos);*/
+    DEBUGF("Reading new packet at %x  ", wma_pointer);
 
-    if (ci->read_filebuf(&tmp8, 1) == 0) {
-        return ASF_ERROR_EOF;
-    }
+    tmp8=*wma_pointer++;
     bytesread++;
 
     /* TODO: We need a better way to detect endofstream */
     if (tmp8 != 0x82) {
-    DEBUGF("Read failed:  packet did not sync\n");
-    return -1;
+	DEBUGF("Read failed:  packet did not sync\n");
+	return -1;
     }
 
 
@@ -128,14 +140,13 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
        }
 
        /* Skip ec_data */
-       ci->advance_buffer(ec_length);
+       wma_pointer+=ec_length;
        bytesread += ec_length;
     } else {
         ec_length = 0;
     }
-
-    if (ci->read_filebuf(&packet_flags, 1) == 0) { return ASF_ERROR_EOF; }
-    if (ci->read_filebuf(&packet_property, 1) == 0) { return ASF_ERROR_EOF; }
+    packet_flags=*wma_pointer++;
+    packet_property=*wma_pointer++;
     bytesread += 2;
 
     datalen = GETLEN2b((packet_flags >> 1) & 0x03) +
@@ -148,11 +159,10 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
         return ASF_ERROR_OUTOFMEM;
     }
 #endif
+    DEBUGF("datalen in data - %d\n",datalen);
 
-    if (ci->read_filebuf(data, datalen) == 0) {
-        return ASF_ERROR_EOF;
-    }
-
+    memcpy(data,wma_pointer,datalen);
+    wma_pointer+=datalen;
     bytesread += datalen;
 
     datap = data;
@@ -191,9 +201,7 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
 
     /* check if we have multiple payloads */
     if (packet_flags & 0x01) {
-        if (ci->read_filebuf(&tmp8, 1) == 0) {
-            return ASF_ERROR_EOF;
-        }
+        tmp8=*wma_pointer++;
         payload_count = tmp8 & 0x3f;
         payload_length_type = (tmp8 >> 6) & 0x03;
         bytesread++;
@@ -218,8 +226,9 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
     *audiobufsize = 0;
     *packetlength = length - bytesread;
 
-    buf = ci->request_buffer(&bufsize, length);
-    datap = buf;
+    /*    buf = ci->request_buffer(&bufsize, length); */
+    datap = wma_pointer;
+    bufsize=length;
 
     if (bufsize != length) {
         /* This should only happen with packets larger than 32KB (the
@@ -231,7 +240,7 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
                (int)length,(int)bufsize,(int)ci->curpos);
         return -1;
     }
-
+    DEBUGF("payload count %d\n",payload_count);
     for (i=0; i<payload_count; i++) {
         stream_id = datap[0]&0x7f;
         datap++;
@@ -268,7 +277,7 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
 
         multiple = packet_flags & 0x01;
 
-
+	
         if (multiple) {
             int x;
 
@@ -276,6 +285,7 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
 
             if (x != 2) {
                 /* in multiple payloads datalen should be a word */
+		DEBUGF("x is not 2 at line 283\n");
                 return ASF_ERROR_INVALID_VALUE;
             }
 
@@ -298,6 +308,7 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
         if (stream_id == wfx->audiostream)
         {
             if (*audiobuf == NULL) {
+		DEBUGF("got payload %x %d\n",datap,payload_datalen);
                 /* The first payload can stay where it is */
                 *audiobuf = datap;
                 *audiobufsize = payload_datalen;
@@ -313,7 +324,7 @@ static int asf_read_packet(uint8_t** audiobuf, int* audiobufsize, int* packetlen
         datap += payload_datalen;
         bytesread += payload_datalen;
     }
-
+    DEBUGF("returning mornally %x\n",*audiobuf);
     if (*audiobuf != NULL)
         return 1;
     else
@@ -457,23 +468,8 @@ static int seek(int ms, asf_waveformatex_t* wfx)
         }
     }
 }
-#if 0
-int rb_wma_init(void)
-{
-    ao_sample_format format;
-    int ao_default_driver;
 
-    ao_initialize();
-    ao_default_driver = ao_default_driver_id();
-	
-    out_device = ao_open_live(ao_default_driver, &format, NULL);
-    if (out_device == NULL) {
-	fprintf(stderr, "Error opening device.\n");
-	return 1;
-    }   
-    return 0;
-}
-#endif
+
 int rb_wma_start_playback(char * pathname)
 {
     uint32_t elapsedtime;
@@ -486,25 +482,32 @@ int rb_wma_start_playback(char * pathname)
     int audiobufsize;
     int packetlength = 0;
     int errcount = 0;
-
-    /* XXX stat the pathname and initialise id3->filesize */
+    struct stat mstat;
+    struct mp3entry id3;
 
     /* Generic codec initialisation */
     /* ci->configure(DSP_SET_SAMPLE_DEPTH, 29); */
+    static char *wma_data ;
 
-next_track:
-
-    /* Wait for the metadata to be read */
-    while (!*ci->taginfo_ready && !ci->stop_codec)
-        ci->sleep(1);
-
+    int fd=open(pathname,O_RDONLY);
+    if(fd>-1) {
+	fstat(fd,&mstat);
+	get_asf_metadata(fd,&id3);
+	id3.filesize=mstat.st_size;
+	ci->id3=&id3;
+	wma_data=(char *) mmap(0, mstat.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	wma_pointer=wma_data;
+    } else {
+	perror(pathname);
+    }
+  
     retval = CODEC_OK;
 
-    /* Remember the resume position - when the codec is opened, the
-       playback engine will reset it. */
-    resume_offset = ci->id3->offset;
 restart_track:
-    /*
+
+    /*    mem_ptr = 0;
+    mallocbuf = (unsigned char *)ci->codec_get_buffer((size_t *)&bufsize);
+    
     if (codec_init()) {
         LOGF("WMA: Error initialising codec\n");
         retval = CODEC_ERROR;
@@ -515,6 +518,8 @@ restart_track:
        saves us from parsing it again here. */
     memcpy(&wfx, ci->id3->toc, sizeof(wfx));
 
+    pcm_open_device(wfx.bitspersample,wfx.channels,wfx.rate);
+
     if (wma_decode_init(&wmadec,&wfx) < 0) {
         LOGF("WMA: Unsupported or corrupt file\n");
         retval = CODEC_ERROR;
@@ -523,28 +528,11 @@ restart_track:
 
     DEBUGF("**************** IN WMA.C ******************\n");
 
-    if (resume_offset > ci->id3->first_frame_offset)
-    {
-        /* Get start of current packet */
-        int packet_offset = (resume_offset - ci->id3->first_frame_offset)
-            % wfx.packet_size;
-        ci->seek_buffer(resume_offset - packet_offset);
-        elapsedtime = get_timestamp(&i);
-        ci->set_elapsed(elapsedtime);
-    }
-    else
-    {
-        /* Now advance the file position to the first frame */
-        ci->seek_buffer(ci->id3->first_frame_offset);
-        elapsedtime = 0;
-    }
+    /* Now advance the file position to the first frame */
+    wma_pointer+=ci->id3->first_frame_offset;
+    elapsedtime = 0;
 
-    resume_offset = 0;
-    /*
-      ao_sample_format format;
-      format.rate =  wfx.rate;
-      format.channels = wfx.channels;
-    */
+    
     /* codec_set_replaygain(ci->id3); */
 
     /* The main decoding loop */
@@ -552,11 +540,10 @@ restart_track:
     res = 1;
     while (res >= 0)
     {
-        ci->yield();
-        if (ci->stop_codec || ci->new_track) {
+        if(!input_poll(0)) {
             goto done;
         }
-
+#if 0
         /* Deal with any pending seek requests */
         if (ci->seek_time){
 
@@ -578,21 +565,22 @@ restart_track:
             wmadec.last_bitoffset = 0;
             ci->seek_complete();
         }
+#endif
         errcount = 0;
 new_packet:
-        res = asf_read_packet(&audiobuf, &audiobufsize, &packetlength, &wfx);
-
+        res=asf_read_packet(&audiobuf,&audiobufsize, &packetlength, &wfx);
+	DEBUGF("audiobuf=%x (%d)\n",audiobuf,audiobufsize);
         if (res < 0) {
             /* We'll try to recover from a parse error a certain number of
              * times. If we succeed, the error counter will be reset.
              */
-
+	    
             errcount++;
             DEBUGF("read_packet error %d, errcount %d\n",wmares, errcount);
             if (errcount > 5) {
                 goto done;
             } else {
-                ci->advance_buffer(packetlength);
+                wma_pointer+=packetlength;
                 goto new_packet;
             }
         } else if (res > 0) {
@@ -604,8 +592,6 @@ new_packet:
                                                      decoded,
                                                      audiobuf, audiobufsize);
 
-                ci->yield ();
-
                 if (wmares < 0) {
                     /* Do the above, but for errors in decode. */
                     errcount++;
@@ -613,27 +599,25 @@ new_packet:
                     if (errcount > 5) {
                         goto done;
                     } else {
-                        ci->advance_buffer(packetlength);
+                        wma_pointer+=packetlength;
                         goto new_packet;
                     }
                 } else if (wmares > 0) {
-                    ci->pcmbuf_insert(decoded, NULL, wmares);
+		    /* I'm not 100% that multiplying by the number of
+		     * channels is the right thing to do here, but it
+		     * seems to work */
+		    pcm_play_buf(decoded,wmares*wfx.channels,4,29);
                     elapsedtime += (wmares*10)/(wfx.rate/100);
-                    ci->set_elapsed(elapsedtime);
                 }
-                ci->yield();
             }
         }
-
-        ci->advance_buffer(packetlength);
+	wma_pointer+=packetlength;
     }
     retval = CODEC_OK;
 
 done:
     /*LOGF("WMA: Decoded %ld samples\n",elapsedtime*wfx.rate/1000);*/
 
-    if (ci->request_next_track())
-        goto next_track;
 exit:
     return retval;
 }
