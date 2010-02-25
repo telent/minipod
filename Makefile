@@ -14,5 +14,8 @@ include depend
 depend: $(SRC) 
 	gcc -MM $^ >depend
 
+tags: $(SRC) $(WMA_SRC)
+	etags $^
+
 clean: 
 	-rm *.o minipod libwma/*.o libwma.a depend
