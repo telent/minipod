@@ -500,17 +500,6 @@ int rb_wma_start_playback(char * pathname)
   
     retval = CODEC_OK;
 
-restart_track:
-
-    /*    mem_ptr = 0;
-    mallocbuf = (unsigned char *)ci->codec_get_buffer((size_t *)&bufsize);
-    
-    if (codec_init()) {
-        LOGF("WMA: Error initialising codec\n");
-        retval = CODEC_ERROR;
-        goto exit;
-    }
-    */
     /* Copy the format metadata we've stored in the id3 TOC field.  This
        saves us from parsing it again here. */
     memcpy(&wfx, ci->id3->toc, sizeof(wfx));
@@ -532,7 +521,6 @@ restart_track:
     
     /* codec_set_replaygain(ci->id3); */
 
-    /* The main decoding loop */
 
     res = 1;
     while (res >= 0)
