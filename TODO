@@ -20,14 +20,16 @@ Volume
  - +6dB boost on/off
  - sound processing filter is off/min/max 
 
-
 [1] ("reset" is implemented by calling exec() on ourselves)
 [2] browse into subdirectories
 [1] scroll up/down when too many tracks for screen
 [2] nicer fonts
 [1] mount USB sticks when we get dbus messages
+ it might be easier to do this with a udev rule that automounts
+ then restarts minipod in the new directory
 [3] m3u playlists would be nice
-[1] WMA playback
+[1] WMA playback - mostly done, needs integrating
+[1] Implement seek
 [1] WAV playback
 [2] FLAC playback
 [3] Oh, go on them: OGG
