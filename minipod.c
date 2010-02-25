@@ -55,7 +55,7 @@ int main(int argc,char *argv[])
 	unsigned int i;
 
 	char * directory="/mnt/"; /* trailing / is important! */
-	if(argc==1) directory=argv[1];
+	if(argc==2) directory=argv[1];
 	chdir(directory);
 	songs=read_songs(directory);
 
