@@ -8,9 +8,10 @@ minipod: libwma.a $(OBJ)
 
 libwma.a: libwma.a($(WMA_SRC:.c=.o))
 
+include depend 
 
+depend: $(SRC) 
+	gcc -MM $^ >depend
 
 clean: 
-	-rm *.o minipod libwma/*.o libwma.a
-
-
+	-rm *.o minipod libwma/*.o libwma.a depend
