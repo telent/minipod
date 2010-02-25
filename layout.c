@@ -20,7 +20,8 @@ static struct button_style track_list_style ={
 
 static int switch_tab(struct button *b,struct event *ev)
 {
-    return set_tab((int)b->user_data);
+    set_tab((int)b->user_data);
+    return 0;
 }
 
 static void render_tracks(struct button *b) 

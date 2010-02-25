@@ -114,17 +114,15 @@ int input_poll(int wait)
     struct timeval timeout;
     timeout.tv_sec=0; timeout.tv_usec=0;
 
-    if(pending_command.tag) return 1;
-    if(!wait) {
-	/* during playback, we don't want to hang waiting for input */
-	FD_ZERO(&fdset);
-	FD_SET(ts_fd(ts), &fdset);
-	if(select(ts_fd(ts)+1, &fdset,0,0, &timeout)==0)
-	    return 0;
-    }
-    
-    do{
-	ret = ts_read(ts, &samp, 1);
+    while(pending_command.tag == NONE) {
+	if(!wait) {
+	    /* during playback, we don't want to hang waiting for input */
+	    FD_ZERO(&fdset);
+	    FD_SET(ts_fd(ts), &fdset);
+	    if(select(ts_fd(ts)+1, &fdset,0,0, &timeout)==0)
+		return 0;
+	}
+    	ret = ts_read(ts, &samp, 1);
 	if (ret < 0) {
 	    perror("ts_read");
 	    closedown(0);
@@ -146,7 +144,7 @@ int input_poll(int wait)
 	    }
 	    refresh_screen();
 	}
-    } while(wait && (pending_command.tag==NONE));
+    }
     return 1;
 }
 
