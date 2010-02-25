@@ -1,11 +1,19 @@
 
 A special-purpose audio player for the FriendlyARM Mini2440 system.
-Based on mashing code together from ts_test (tslib example program)
-and the madplay example program.  Therefore
+Based on mashing code together from multiple sources including
+
+- ts_test (tslib example program)
+- and rockbox (the ASF reader WMA decoder)
+- and the madplay example program.  
+
+Therefore
 
 Some parts Copyright (C) 2001 Russell King.
 Other parts Copyright (C) 2000-2004 Underbit Technologies, Inc.
-The rest Copyright (C) 2010 Daniel Barlow
+Yet other parts (C) whoever holds the copyrights in Rockbox
+ (multiple entities; check the sources in libwma/ and wma.c)
+
+Anything not covered in the above is Copyright (C) 2010 Daniel Barlow
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
