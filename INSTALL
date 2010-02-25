@@ -12,10 +12,15 @@ cross-compiler can find them.
 
    $ apt-cross -a armel -i  libmad0-dev libao-dev libts-dev
 
-3) Look at the Makefile.  Edit where necessary
+3) the Makefile is set up to work with VPATH so that you can build
+for different targets or different optimization settings without
+having to make clean each time.  Do
 
-4) make
+   $ make -C $profile # where $profile in "host", "arm", "debug
 
+to choose one.  These are actually directories containing Makefiles,
+so if you need more profiles, just copy one of the existing ones and 
+edit as needed
 
 
 
