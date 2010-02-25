@@ -214,7 +214,7 @@ enum mad_flow output_fn(void *data,
   if(ob>ob_watermark ) ob_watermark=ob;
   ao_play(pcm_out_device,pcm_buffer,ob-pcm_buffer);
   
-  return input_poll(0) ?  MAD_FLOW_CONTINUE : MAD_FLOW_STOP;
+  return input_poll(0) ?  MAD_FLOW_STOP : MAD_FLOW_CONTINUE;
 }
 
 /*
