@@ -28,7 +28,6 @@ Volume
  it might be easier to do this with a udev rule that automounts
  then restarts minipod in the new directory
 [3] m3u playlists would be nice
-[1] WMA playback - mostly done, needs integrating
 [1] Implement seek
 [1] WAV playback
 [2] FLAC playback
@@ -36,3 +35,7 @@ Volume
 [2] EQ/mixer controls
 [4] Bluetooth
 [1] disable screensaver
+
+Done
+
+[1] WMA playback

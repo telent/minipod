@@ -60,5 +60,6 @@ struct song *read_songs(char *dirname)
 	}
     }
     song->filename=(char *)0;
+    n_songs=song-songs;
     return songs;
 }

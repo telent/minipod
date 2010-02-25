@@ -39,9 +39,12 @@ static int switch_track(struct button *b,struct event *ev)
 {
     int y_off=ev->y - b->y ;
     int i=y_off/30;
-    printf("track at offset %d\n",i);
-    pending_command.tag=SKIP; pending_command.value=i;
-    return 1;
+    if(i<n_songs) {
+	printf("track at offset %d max %d\n",i,n_songs);
+	pending_command.tag=SKIP; pending_command.value=i;
+	return 1;
+    } else 
+	return 0;
 }
 
 void layouts_init() 
