@@ -38,6 +38,26 @@
 #include <string.h>
 
 #include "pcm.h"
+#include "songlist.h"
+
+bool get_asf_metadata(int fd, struct mp3entry* id3); /*  libwma/asf.c */
+
+struct song* wma_read_metadata(struct song *song) 
+{
+    /* returns 0 on error */
+    struct stat mstat;
+    struct mp3entry *id3=calloc(sizeof (struct mp3entry),1);
+    asf_waveformatex_t * wfx;
+    int  fd=open(song->filename,O_RDONLY);
+    fstat(fd,&mstat);
+    get_asf_metadata(fd,id3);
+    song->filesize_bytes=mstat.st_size;
+    song->format_data=id3;
+    wfx=(asf_waveformatex_t * ) id3->toc;
+    song->channels=wfx->channels; song->samplerate=wfx->rate;
+    close(fd);
+    return song;
+}
 
 int packet_count=0;
 
@@ -468,7 +488,7 @@ static int seek(int ms, asf_waveformatex_t* wfx)
 }
 
 
-int rb_wma_start_playback(char * pathname)
+int wma_decode_buffer(struct song *song, char *data, int bytes, int offset)
 {
     uint32_t elapsedtime;
     int retval;
@@ -479,32 +499,15 @@ int rb_wma_start_playback(char * pathname)
     int audiobufsize;
     int packetlength = 0;
     int errcount = 0;
-    struct stat mstat;
-    struct mp3entry id3;
 
-    /* Generic codec initialisation */
-    /* ci->configure(DSP_SET_SAMPLE_DEPTH, 29); */
-    static char *wma_data ;
+    wma_pointer=data;
+    ci->id3=song->format_data;
 
-    int fd=open(pathname,O_RDONLY);
-    if(fd>-1) {
-	fstat(fd,&mstat);
-	get_asf_metadata(fd,&id3);
-	id3.filesize=mstat.st_size;
-	ci->id3=&id3;
-	wma_data=(char *) mmap(0, mstat.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	wma_pointer=wma_data;
-    } else {
-	perror(pathname);
-    }
-  
     retval = CODEC_OK;
 
-    /* Copy the format metadata we've stored in the id3 TOC field.  This
-       saves us from parsing it again here. */
+    /* Copy the format metadata we stored already */
+    
     memcpy(&wfx, ci->id3->toc, sizeof(wfx));
-
-    pcm_open_device(wfx.bitspersample,wfx.channels,wfx.rate);
 
     if (wma_decode_init(&wmadec,&wfx) < 0) {
         LOGF("WMA: Unsupported or corrupt file\n");
@@ -525,7 +528,7 @@ int rb_wma_start_playback(char * pathname)
     res = 1;
     while (res >= 0)
     {
-        if(!input_poll(0)) {
+        if(input_poll(0)) {
             goto done;
         }
 #if 0
@@ -606,3 +609,9 @@ done:
 exit:
     return retval;
 }
+
+struct decoder wma_decoder = {
+    wma_read_metadata,				
+    wma_decode_buffer,
+    0 /* wma_stop*/
+};

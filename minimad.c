@@ -29,10 +29,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
-#include "mad.h"
+#include <mad.h>
 
 #include "pcm.h"
+#include "songlist.h"
+
+struct song* mp3_read_metadata(struct song *song) 
+{
+    /* returns 0 on error */
+    struct stat mstat;
+    stat(song->filename,&mstat);
+    song->channels=2; song->samplerate=44100;
+    song->filesize_bytes=mstat.st_size;
+    /* XXX read the tags */
+    return song;
+}
 
 
 /* A generic pointer to this structure is passed to each of the
@@ -66,42 +77,23 @@ static enum mad_flow error_fn(void *data, struct mad_stream *stream,
 			   struct mad_frame *frame);
 
 
-/* 
- * Don't call this recursively
- */
-
-int mad_start_playback(char * pathname)
+int mp3_decode_buffer(struct song *song, char *data, int bytes, int offset)
 {
-    /* Open and mmap the specified file.  Instantiate a decoder object
-     * and configures it with the input, output, and error callback
-     * functions.  A single call to mad_decoder_run() continues until
-     * a callback function returns MAD_FLOW_STOP (to stop decoding) or
-     * MAD_FLOW_BREAK (to stop decoding and signal an error).
+    /* Instantiate a decoder object and configures it with the input,
+     * output, and error callback functions.  A single call to
+     * mad_decoder_run() continues until a callback function returns
+     * MAD_FLOW_STOP (to stop decoding) or MAD_FLOW_BREAK (to stop
+     * decoding and signal an error).
      */
 
-    struct stat mstat;
-    char *mp3_data;
-    int ret;
-    int fd=open(pathname,O_RDONLY);
-
-    fprintf(stderr,"starting playback: \"%s\" (%d)\n",pathname,fd);
-    if (stat(pathname, &mstat) == -1 || mstat.st_size == 0)
-	return 2;
-    
-    mp3_data = (char *) mmap(0, mstat.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    if (mp3_data == MAP_FAILED) {
-	close(fd);
-	return 3;
-    }
-    pcm_open_device(16,2,44100);
-    
     struct buffer buffer;
     struct mad_decoder decoder;
-    
+    int ret;
+
     /* initialize our private message structure */
     
-    buffer.start = mp3_data;
-    buffer.length = mstat.st_size;
+    buffer.start = (unsigned char *)data;
+    buffer.length = bytes;
     
     /* configure input, output, and error functions */
     mad_decoder_init(&decoder, &buffer,
@@ -113,9 +105,7 @@ int mad_start_playback(char * pathname)
     
     /* cleanup */
     mad_decoder_finish(&decoder);
-    munmap(mp3_data, mstat.st_size);
-    close(fd);
-    return 0;
+    return ret;
 }
 
 
@@ -239,4 +229,11 @@ enum mad_flow error_fn(void *data,
 
   return MAD_FLOW_CONTINUE;
 }
+
+
+struct decoder mp3_decoder = {
+    mp3_read_metadata,				
+    mp3_decode_buffer,
+    0/* mp3_stop*/
+};
 

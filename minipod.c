@@ -95,12 +95,12 @@ int main(int argc,char *argv[])
 	    case NONE:
 		/* end of track, no other operation requested */
 		p=songs[++current_track].filename;
-		if(p) mad_start_playback(p);
+		if(p) start_playback(&songs[current_track]);
 		else input_poll(1);
 		break;
 	    case SKIP:
 		current_track=v;
-		mad_start_playback(songs[current_track].filename);
+		start_playback(&songs[current_track]);
 		break;
 	    default:
 		fprintf(stderr," command %d unimplemented\n",tag);
