@@ -1,6 +1,11 @@
 
 A special-purpose audio player for the FriendlyARM Mini2440 system.
-Based on mashing code together from multiple sources including
+For details, see http://telent.posterous.com/
+
+* Copyright
+
+This project is based on mashing code together from multiple sources
+including
 
 - ts_test (tslib example program)
 - and rockbox (the ASF reader WMA decoder)
