@@ -52,7 +52,7 @@ struct button *add_button(struct button b)
     }
     if(buttons_next==buttons_length) {
 	buttons_length+=inc;
-	buttons=realloc(buttons,buttons_length);
+	buttons=realloc(buttons,buttons_length * sizeof (struct button));
     }
     return (struct button*) (memcpy(&buttons[buttons_next++],&b,sizeof (struct button)));
 }
