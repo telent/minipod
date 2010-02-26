@@ -1,11 +1,16 @@
 #define IN_GUI_C
 #include "gui.h"
 #include "fbutils.h"
+
 #include  <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <tslib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 struct button *buttons;
 static int buttons_length=0;
@@ -34,7 +39,14 @@ int gui_init() {
 	close_framebuffer();
 	return(1);
     }
+
+    int console=open("/dev/tty1",O_RDWR);
+    if(console>=-1) {
+	const char unblank[]="\033[9;0]\033[14;0]";
+	write(console,unblank,sizeof unblank);
+    }
     return 0;
+
 }
 int gui_shutdown() 
 {
