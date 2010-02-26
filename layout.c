@@ -23,6 +23,19 @@ static struct button_style track_list_style ={
  border_color: 0,
  label_color: 0,
 };
+static struct button_style slider_style ={
+ background_color: 0,
+ border_color: 1,
+ label_color: 1,
+};
+static struct button_style divider_style ={
+ background_color: 0, border_color: 4, label_color: 1,
+};
+static struct button_style unstyled ={
+ background_color: -1,
+ border_color: -1,
+ label_color: 1,
+};
 
 static int switch_tab(struct button *b,struct event *ev)
 {
@@ -146,5 +159,85 @@ void layouts_init()
 		       render: draw_button,
 		       style: &fg_tab_style, label: "Volume"
 		       });
- }
+
+    /* tab3: mixer sliders */
+
+    add_button((struct button)
+	       {tab: 3, x: 10,y: 40, w: 40, h: 240,
+		       render: draw_button,
+		       style: &slider_style,
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50,y: 40, w: 40, h: 240,
+		       render: draw_button,
+		       style: &slider_style,
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50,y: 40, w: 40, h: 240,
+		       render: draw_button,
+		       style: &slider_style,
+		       });
+
+    /* tab3: +6dB button */
+
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50+50+10,y: 240, w: 40, h: 40,
+		       render: draw_button,
+		       style: &slider_style,
+		       });
+
+    /* tab3: boost */
+
+    add_button((struct button)	/* divider */
+	       {tab: 3, x: 10+50+50+50+5, y: 40, w: 50, h: 190,
+		       render: draw_button,
+		       style: &divider_style,
+		       });
+    add_button((struct button)	/* label */
+	       {tab: 3, x: 10+50+50+50+9, y: 45, w: 35, h: 20,
+		       render: draw_button,
+		       style: &unstyled, label: " Boost "
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50+50+10,y: 180, w: 40, h: 40,
+		       render: draw_button,
+		       style: &slider_style, label: "Off"
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50+50+10,y: 130, w: 40, h: 40,
+		       render: draw_button,
+		       style: &slider_style, label: "Min"
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50+50+10,y: 80, w: 40, h: 40,
+		       render: draw_button,
+		       style: &slider_style, label: "Max"
+		       });
+
+
+    
+
+    /* tab3 : labels */
+    add_button((struct button)
+	       {tab: 3, x: 10, y: 280, w: 40, h: 20,
+		       render: draw_button,
+		       style: &unstyled, label: "Volume"
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50, y: 280, w: 40, h: 20,
+		       render: draw_button,
+		       style: &unstyled, label: "Bass"
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50, y: 280, w: 40, h: 20,
+		       render: draw_button,
+		       style: &unstyled, label: "Treble"
+		       });
+    add_button((struct button)
+	       {tab: 3, x: 10+50+50+50+10, y: 280, w: 40, h: 20,
+		       render: draw_button,
+		       style: &unstyled, label: "+6dB"
+		       });
+     
+}
 
