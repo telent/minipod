@@ -19,6 +19,11 @@ struct button {
     int w;
     int h;
     void (*render)(struct button *);
+    /* update is called when the button is already on the screen 
+     * but may want to change its contents.  e.g. clocks or
+     * animations
+     */
+    void (*update)(struct button *);
     int (*handler)(struct button * ,struct event *);
     char * label;
     void * user_data;
@@ -31,6 +36,7 @@ void draw_button(struct button *b); /* example render function */
 
 int set_tab(int new_tab);	/* new_tab==0 to query current tab */
 void refresh_screen(void);
+void update_screen(void);
 
 
 #ifndef IN_GUI_C

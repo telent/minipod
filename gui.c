@@ -103,6 +103,18 @@ void refresh_screen()
 	    (b->render)((void *)b);
 	}
     }
+    update_screen();
+}
+
+void update_screen() 
+{
+    int i;
+    for(i=0;i<buttons_next;i++) {
+	struct button *b=&buttons[i];
+	if((current_tab==b->tab) && b->update) {
+	    (b->update)((void *)b);
+	}
+    }
 }
     
 int input_poll(int wait)
@@ -115,6 +127,7 @@ int input_poll(int wait)
     timeout.tv_sec=0; timeout.tv_usec=0;
 
     while(pending_command.tag == NONE) {
+	update_screen();
 	if(!wait) {
 	    /* during playback, we don't want to hang waiting for input */
 	    FD_ZERO(&fdset);

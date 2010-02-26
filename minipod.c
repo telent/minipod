@@ -30,6 +30,7 @@
 #include "libwma/codecs.h"
 #include "pcm.h"
 #include "gui.h"
+#include "layout.h"
 
 void closedown(int sig)
 {
@@ -43,7 +44,12 @@ void closedown(int sig)
 
 static int palette [] =
 {
-	0x000000, 0xffe080, 0xffffff, 0xe0c0a0, 0x304050, 0x80b8c0
+    0x000000, /* black */
+    0xffffff, /* white */
+    0xd22b2b, /* dark red */
+    0x31ab00, /* green */
+    0x697b82, /* grey */
+    0x1933b8  /* blue */
 };
 #define NR_COLORS (sizeof (palette) / sizeof (palette [0]))
 

@@ -34,6 +34,11 @@ static struct {
     unsigned char end[1];
 } b;
 
+unsigned char *get_pcm_buffer() {
+    return b.pcm_buffer;
+}
+
+
 int pcm_play_buf(char *buf,unsigned int length, unsigned int bytes_per_sample, 
 		 unsigned int bit_depth)
 {
@@ -59,6 +64,7 @@ int pcm_play_buf(char *buf,unsigned int length, unsigned int bytes_per_sample,
 	*p++=((val & 0xff00)>>8);
     }
     int bytes=p-b.pcm_buffer;
+    update_screen();
     ao_play(pcm_out_device,b.pcm_buffer,bytes);
     return bytes/2;
 }

@@ -1,6 +1,12 @@
+#include <stdlib.h>
+
+
 #include "gui.h"
 #include "songlist.h"
 #include "fbutils.h"
+
+#define IN_LAYOUT_C
+#include "layout.h"
 
 static struct button_style fg_tab_style ={
  background_color: 4,
@@ -26,13 +32,33 @@ static int switch_tab(struct button *b,struct event *ev)
 
 static void render_tracks(struct button *b) 
 {
-    draw_button(b);
+    draw_button(b); 
     int i;
     for(i=0;songs[i].filename;i++) {
 	int y=i*30;
 	if(y>b->h) return;
-	/* printf("song %s\n",songs[i].filename); */
 	put_string(b->x+20,b->y+y,songs[i].filename,1);
+    }
+}
+
+static void update_waveform(struct button *b) 
+{
+    int x;
+    signed short* data=get_pcm_buffer();
+    if(!data) return;
+    if(*data>0) {
+	while(*data>0) data++;
+    } else {
+	while(*data<0) data++;
+    }
+    int midline= b->y+(b->h)/2;
+
+    int x2=b->x+b->w;
+    for(x=b->x; x<x2; x++,data+=16) {
+	signed short val=(*data>>9);
+	line(x, b->y, x, b->y+b->h, 0);
+	line(x, midline, x, midline + val, 5);
+	pixel(x,midline+val/4,1);
     }
 }
 
@@ -41,7 +67,6 @@ static int switch_track(struct button *b,struct event *ev)
     int y_off=ev->y - b->y ;
     int i=y_off/30;
     if(i<n_songs) {
-	printf("track at offset %d max %d\n",i,n_songs);
 	pending_command.tag=SKIP; pending_command.value=i;
 	return 1;
     } else 
@@ -94,6 +119,13 @@ void layouts_init()
 		       render: draw_button,
 		       handler: switch_tab, user_data: (void *)3,
 		       style: &bg_tab_style, label: "Volume"
+		       });
+
+    add_button((struct button)
+	       {tab: 2, x: 5,y: 45, w: 225, h: 200,
+		       update: update_waveform, user_data: 0,
+		       render: draw_button,
+		       style: &track_list_style,
 		       });
 
     /* tab 3 */
