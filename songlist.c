@@ -34,7 +34,6 @@ struct song *read_songs(char *dirname)
     struct song *songs,*song;
 
     while((de=readdir(dir))) {
-	int len=strlen(de->d_name)-4;
 	if(find_decoder(de->d_name)) {
 	    nsongs++;
 	    buf_size+=strlen(de->d_name)+1;
@@ -48,7 +47,7 @@ struct song *read_songs(char *dirname)
     rewinddir(dir);
     struct decoder *d;
     while(nsongs && (de=readdir(dir))) {
-	if(d=find_decoder(de->d_name)) {
+	if((d=find_decoder(de->d_name))) {
 	    nsongs--;
 	    strcpy(buf,de->d_name);
 	    song->filename=buf;
