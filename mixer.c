@@ -11,15 +11,11 @@
 #include <alsa/asoundlib.h>
 #include <sys/poll.h>
 
+#include "mixer.h"
 
 static snd_mixer_t *mixer_handle = NULL;
 
-enum mixer_controls { MASTER=0,BASS,TREBLE,NCONTROLS };
-struct mixer_control {
-    long min,max;
-    char *name;
-    snd_mixer_elem_t *elem;
-} mixer_controls[]={
+struct mixer_control mixer_controls[]={
     {0,0,"Master"},
     {0,0,"Bass"},
     {0,0,"Treble"},
@@ -46,7 +42,7 @@ int mixer_init_control(struct mixer_control * c)
     if (snd_mixer_selem_has_playback_volume(c->elem)) {
 	snd_mixer_selem_get_playback_volume_range(c->elem,&(c->min),&(c->max));
 	snd_mixer_selem_set_playback_volume(c->elem, SND_MIXER_SCHN_MONO,
-					    c->min);
+					    (c->min+c->max)/2);
 	return 1;
     }
     return 0;
@@ -80,6 +76,11 @@ void mixer_init()
 	c++;
     }
 }
+struct mixer_control *mixer_get_control(int index) 
+{
+    return &mixer_controls[index];
+}
+
 
 int mixer_set_value(struct mixer_control * c, long new_value)
 {
@@ -91,7 +92,7 @@ int mixer_set_value(struct mixer_control * c, long new_value)
     return c->min-1;
 }
 
-int mixer_get_value(struct mixer_control * c)
+long mixer_get_value(struct mixer_control * c)
 {
     long new_value;
     snd_mixer_selem_get_playback_volume(c->elem, SND_MIXER_SCHN_MONO,

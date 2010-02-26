@@ -76,7 +76,8 @@ int main(int argc,char *argv[])
 	    gui_shutdown();
 	    exit(1);
 	}
-	
+	mixer_init();
+
 	/*	rb_wma_start_playback("/dan/minipod/foo.wma"); */
 
 	/*	mouse_x = xres/2;

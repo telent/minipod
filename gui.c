@@ -142,14 +142,13 @@ int input_poll(int wait)
 	}
 	
 	if (ret != 1) return 0;
-#if 1
+#if 0
 	printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec,
 	       samp.x, samp.y, samp.pressure);
 #endif
 	if(samp.pressure==0) {
 	    struct button *b=find_button(current_tab,samp.x,samp.y);
 	    if(b) {
-		printf("button %s\n", b->label);
 		if(b->handler) {
 		    struct event e={samp.x,samp.y,samp.pressure,-1};
 		    (b->handler)((void *)b,&e);

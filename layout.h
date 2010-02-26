@@ -1,2 +1,2 @@
 
-void layouts_init() ;
+void layouts_init(void) ;

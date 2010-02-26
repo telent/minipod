@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "songlist.h"
 #include "fbutils.h"
+#include "mixer.h"
 
 #define IN_LAYOUT_C
 #include "layout.h"
@@ -52,6 +53,40 @@ static void render_tracks(struct button *b)
 	if(y>b->h) return;
 	put_string(b->x+20,b->y+y,songs[i].filename,1);
     }
+}
+
+static void render_volume_slider(struct button *b) 
+{
+    struct mixer_control *c = (struct mixer_control *)b->user_data;
+    long v=mixer_get_value(c);
+
+    draw_button(b);
+    fillrect(b->x+2, b->y+b->h-2, 
+	     b->x+b->w-2, 
+	     b->y + b->h -2 - (b->h* v)/(c->max-c->min),4);
+}
+
+static void set_volume_slider(struct button *b,struct event *ev) 
+{
+    struct mixer_control *c = (struct mixer_control *)b->user_data;
+    long off=ev->y-b->y;
+    long range=c->max-c->min;
+
+    long oldvol=mixer_get_value(c);
+    long newvol=range- range*off/b->h;
+    long set;
+    printf("oldvol %d, newvol %d\n",oldvol,newvol);
+    /* don't allow a misplaced key to send the volume to max 
+     * in one step */
+    if(newvol>oldvol) {
+	set=oldvol+range/10;
+	if(set==oldvol) set++;
+	if(set>newvol) set=newvol;
+    } else 
+	set=newvol;
+    mixer_set_value(c,set);
+    render_volume_slider(b);
+    return 0;
 }
 
 static void update_waveform(struct button *b) 
@@ -164,17 +199,23 @@ void layouts_init()
 
     add_button((struct button)
 	       {tab: 3, x: 10,y: 40, w: 40, h: 240,
-		       render: draw_button,
+		       render: render_volume_slider,
+		       handler: set_volume_slider,
+		       user_data: mixer_get_control(0),
 		       style: &slider_style,
 		       });
     add_button((struct button)
 	       {tab: 3, x: 10+50,y: 40, w: 40, h: 240,
-		       render: draw_button,
+		       render: render_volume_slider,
+		       handler: set_volume_slider,
+		       user_data: mixer_get_control(1),
 		       style: &slider_style,
 		       });
     add_button((struct button)
 	       {tab: 3, x: 10+50+50,y: 40, w: 40, h: 240,
-		       render: draw_button,
+		       render: render_volume_slider,
+		       handler: set_volume_slider,
+		       user_data: mixer_get_control(2),
 		       style: &slider_style,
 		       });
 
