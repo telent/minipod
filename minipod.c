@@ -55,6 +55,7 @@ static int palette [] =
 
 int mouse_x, mouse_y;
 
+int current_track=0;
 
 int main(int argc,char *argv[])
 {
@@ -91,7 +92,7 @@ int main(int argc,char *argv[])
 	refresh_screen ();
 
 	pending_command.tag=SKIP; pending_command.value=0;
-	int current_track=0;
+	current_track=0;
 	while(1) {
 	    int v=pending_command.value;
 	    int tag=pending_command.tag;
@@ -106,7 +107,7 @@ int main(int argc,char *argv[])
 		else input_poll(1);
 		break;
 	    case SKIP:
-		current_track=v;
+		current_track=v; refresh_screen();
 		start_playback(&songs[current_track]);
 		break;
 	    default:

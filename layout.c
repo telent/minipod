@@ -44,6 +44,7 @@ static int switch_tab(struct button *b,struct event *ev)
     return 0;
 }
 
+extern int current_track;
 static void render_tracks(struct button *b) 
 {
     draw_button(b); 
@@ -51,7 +52,10 @@ static void render_tracks(struct button *b)
     for(i=0;songs[i].filename;i++) {
 	int y=i*30;
 	if(y>b->h) return;
-	put_string(b->x+20,b->y+y,songs[i].filename,1);
+	if(i==current_track) {
+	    fillrect(b->x+2,b->y+y+2,b->x+b->w-2,b->y+y+30-2,5);
+	}
+	put_string(b->x+20,b->y+y +8 ,songs[i].filename,1);
     }
 }
 
@@ -114,7 +118,7 @@ static int switch_track(struct button *b,struct event *ev)
 {
     int y_off=ev->y - b->y ;
     int i=y_off/30;
-    if(i<n_songs) {
+    if((i!=current_track) && (i<n_songs)) {
 	pending_command.tag=SKIP; pending_command.value=i;
 	return 1;
     } else 
