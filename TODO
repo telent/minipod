@@ -14,7 +14,7 @@ Songs
 Playing
 - track title&tags, seek buttons, pause
 - dancing spectrum analyser or some thit, maybe
-Volume
+Volume - done but flickery. revamp event handling to allow "drag" action
 - volume and eq settings
  - volume, bass boost, treble boost sliders
  - +6dB boost on/off
