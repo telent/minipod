@@ -30,7 +30,8 @@ struct button {
     void * style;
 };
 
-struct button *add_button(struct button b) ;
+int add_button(struct button b) ;
+struct button * get_button_index(int ndx);
 struct button *find_button(int tab,int x,int y) ;
 void draw_button(struct button *b); /* example render function */
 
