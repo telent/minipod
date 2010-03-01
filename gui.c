@@ -55,7 +55,7 @@ int gui_shutdown()
 }
 
 
-struct button *add_button(struct button b) 
+int add_button(struct button b) 
 {
     const int inc=10;
     if(buttons==0) {
@@ -66,8 +66,19 @@ struct button *add_button(struct button b)
 	buttons_length+=inc;
 	buttons=realloc(buttons,buttons_length * sizeof (struct button));
     }
-    return (struct button*) (memcpy(&buttons[buttons_next++],&b,sizeof (struct button)));
+    if(memcpy(&buttons[buttons_next],&b,sizeof (struct button))) {
+	return buttons_next++;
+    } else {
+	return -1;
+    }
 }
+
+struct button *get_button_index(int ndx) 
+{
+    return (ndx<buttons_next) ? &(buttons[ndx]) : 0;
+}
+
+
 
 /* return smallest button on tab surrounding x,y */
 struct button *find_button(int tab,int x,int y) 

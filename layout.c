@@ -86,12 +86,20 @@ static void set_volume_slider(struct button *b,struct event *ev)
 	set=oldvol+range/10;
 	if(set==oldvol) set++;
 	if(set>newvol) set=newvol;
-    } else 
-	set=newvol;
+    } else set = (newvol<0) ? 0 : newvol;
     mixer_set_value(c,set);
     render_volume_slider(b);
     return 0;
 }
+static void mute_volume_slider(struct button *b,struct event *ev) 
+{
+    struct button *slider = get_button_index((int)b->user_data);
+    ev->y=b->y+b->h;
+    set_volume_slider(slider,ev);
+    return 0;
+}
+
+
 
 static void update_waveform(struct button *b) 
 {
@@ -201,6 +209,8 @@ void layouts_init()
 
     /* tab3: mixer sliders */
 
+    struct button *vol,*bass,*trb;
+    vol=
     add_button((struct button)
 	       {tab: 3, x: 10,y: 40, w: 40, h: 240,
 		       render: render_volume_slider,
@@ -208,6 +218,7 @@ void layouts_init()
 		       user_data: mixer_get_control(0),
 		       style: &slider_style,
 		       });
+    bass=
     add_button((struct button)
 	       {tab: 3, x: 10+50,y: 40, w: 40, h: 240,
 		       render: render_volume_slider,
@@ -215,6 +226,7 @@ void layouts_init()
 		       user_data: mixer_get_control(1),
 		       style: &slider_style,
 		       });
+    trb=
     add_button((struct button)
 	       {tab: 3, x: 10+50+50,y: 40, w: 40, h: 240,
 		       render: render_volume_slider,
@@ -259,23 +271,23 @@ void layouts_init()
 		       style: &slider_style, label: "Max"
 		       });
 
-
-    
-
     /* tab3 : labels */
     add_button((struct button)
 	       {tab: 3, x: 10, y: 280, w: 40, h: 20,
-		       render: draw_button,
+		       render: draw_button, user_data: vol,
+		       handler:  mute_volume_slider,
 		       style: &unstyled, label: "Volume"
 		       });
     add_button((struct button)
 	       {tab: 3, x: 10+50, y: 280, w: 40, h: 20,
-		       render: draw_button,
+		       render: draw_button, user_data: bass,
+		       handler:  mute_volume_slider,
 		       style: &unstyled, label: "Bass"
 		       });
     add_button((struct button)
 	       {tab: 3, x: 10+50+50, y: 280, w: 40, h: 20,
-		       render: draw_button,
+		       render: draw_button, user_data: trb,
+		       handler:  mute_volume_slider,
 		       style: &unstyled, label: "Treble"
 		       });
     add_button((struct button)
